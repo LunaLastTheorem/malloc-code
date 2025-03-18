@@ -43,40 +43,32 @@ char *alloc(int size)
         {
             int remainder = ptr->size - (size + sizeof(node_t));
 
-            if (remainder >= sizeof(node_t))
+            node_t *new_block = (node_t *)((char *)ptr + sizeof(node_t) + size);
+            new_block->size = remainder;
+            new_block->next = ptr->next;
+
+            ptr->size = remainder;
+
+            if (prev)
             {
-                // Create a new free block
-                node_t *new_block = (node_t *)((char *)ptr + sizeof(node_t) + size);
-                new_block->size = remainder;
-                new_block->next = ptr->next;
-
-                ptr->size = size;
-
-                if (prev)
-                {
-                    prev->next = new_block;
-                }
-                else
-                {
-                    head = new_block;
-                }
+                prev->next = new_block;
             }
             else
             {
-                // Use the entire block
-                if (prev)
-                {
-                    prev->next = ptr->next;
-                }
-                else
-                {
-                    head = ptr->next;
-                }
+                head = new_block;
             }
-
-            printf("Allocated %d bytes at %p\n", size, (void *)((char *)ptr + sizeof(node_t)));
-
             return ((char *)ptr) + sizeof(node_t);
+        }
+        else
+        {
+            if (prev)
+            {
+                prev->next = ptr->next;
+            }
+            else
+            {
+                head = ptr->next;
+            }
         }
 
         prev = ptr;
@@ -112,6 +104,4 @@ void dealloc(char *cPtr)
     {
         head = block;
     }
-
-    printf("Deallocated block at %p\n", cPtr);
 }
