@@ -39,36 +39,39 @@ char *alloc(int size)
 
     while (ptr != NULL)
     {
-        if (ptr->size >= size + sizeof(node_t))
+        if (ptr->size >= size)
         {
             int remainder = ptr->size - (size + sizeof(node_t));
-
-            node_t *new_block = (node_t *)((char *)ptr + sizeof(node_t) + size);
-            new_block->size = remainder;
-            new_block->next = ptr->next;
-
-            ptr->size = remainder;
-
-            if (prev)
+            if (remainder >= sizeof(node_t))
             {
-                prev->next = new_block;
+                node_t *new_block = (node_t *)((char *)ptr + sizeof(node_t) + size);
+                new_block->size = remainder;
+                new_block->next = ptr->next;
+
+                ptr->size = size;
+                ptr->next = NULL;
+
+                if (prev)
+                {
+                    prev->next = new_block;
+                }
+                else
+                {
+                    head = new_block;
+                }
             }
             else
             {
-                head = new_block;
+                if (prev)
+                {
+                    prev->next = ptr->next;
+                }
+                else
+                {
+                    head = ptr->next;
+                }
             }
             return ((char *)ptr) + sizeof(node_t);
-        }
-        else
-        {
-            if (prev)
-            {
-                prev->next = ptr->next;
-            }
-            else
-            {
-                head = ptr->next;
-            }
         }
 
         prev = ptr;
@@ -80,11 +83,7 @@ char *alloc(int size)
 
 void dealloc(char *cPtr)
 {
-    if (cPtr == NULL)
-        return;
-
     node_t *block = (node_t *)(cPtr - sizeof(node_t));
-
     node_t *ptr = head;
     node_t *prev = NULL;
 
@@ -96,12 +95,30 @@ void dealloc(char *cPtr)
 
     block->next = ptr;
 
-    if (prev)
+    if (ptr != NULL && (char *)block + sizeof(node_t) + block->size == (char *)ptr)
     {
-        prev->next = block;
+        block->size += sizeof(node_t) + ptr->size;
+        block->next = ptr->next;
     }
     else
     {
-        head = block;
+        block->next = ptr;
+    }
+
+    if (prev != NULL && (char *)prev + sizeof(node_t) + prev->size == (char *)block)
+    {
+        prev->size += sizeof(node_t) + block->size;
+        prev->next = block->next;
+    }
+    else
+    {
+        if (prev != NULL)
+        {
+            prev->next = block;
+        }
+        else
+        {
+            head = block;
+        }
     }
 }
