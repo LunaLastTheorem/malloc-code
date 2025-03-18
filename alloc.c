@@ -11,13 +11,14 @@ node_t *head;
 int init_alloc()
 {
     head = mmap(NULL, PAGESIZE, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
-    head->size = PAGESIZE - sizeof(node_t);
-    head->next = NULL;
 
     if (head == MAP_FAILED)
     {
         return 1;
     }
+
+    head->size = PAGESIZE - sizeof(node_t);
+    head->next = NULL;
     return 0;
 }
 
@@ -38,16 +39,19 @@ char *alloc(int size)
 
     while (ptr != NULL)
     {
-        if (ptr->size >= size)
+        if (ptr->size >= size + sizeof(node_t))
         {
             int remainder = ptr->size - (size + sizeof(node_t));
-            if (ptr->size >= size + sizeof(node_t))
+
+            if (remainder >= sizeof(node_t))
             {
+                // Create a new free block
                 node_t *new_block = (node_t *)((char *)ptr + sizeof(node_t) + size);
-                new_block->size = ptr->size - size - sizeof(node_t);
+                new_block->size = remainder;
                 new_block->next = ptr->next;
 
                 ptr->size = size;
+
                 if (prev)
                 {
                     prev->next = new_block;
@@ -59,6 +63,7 @@ char *alloc(int size)
             }
             else
             {
+                // Use the entire block
                 if (prev)
                 {
                     prev->next = ptr->next;
@@ -68,6 +73,8 @@ char *alloc(int size)
                     head = ptr->next;
                 }
             }
+
+            printf("Allocated %d bytes at %p\n", size, (void *)((char *)ptr + sizeof(node_t)));
 
             return ((char *)ptr) + sizeof(node_t);
         }
@@ -81,4 +88,30 @@ char *alloc(int size)
 
 void dealloc(char *cPtr)
 {
+    if (cPtr == NULL)
+        return;
+
+    node_t *block = (node_t *)(cPtr - sizeof(node_t));
+
+    node_t *ptr = head;
+    node_t *prev = NULL;
+
+    while (ptr != NULL && ptr < block)
+    {
+        prev = ptr;
+        ptr = ptr->next;
+    }
+
+    block->next = ptr;
+
+    if (prev)
+    {
+        prev->next = block;
+    }
+    else
+    {
+        head = block;
+    }
+
+    printf("Deallocated block at %p\n", cPtr);
 }

@@ -43,11 +43,9 @@ int main()
 	*/
 
 	/*** test 1 ****/
-	printf("flag0\n");
 
 	// Generating ideal strings for comparison
 	char stringA[1000], stringB[1000], stringC[1000], stringD[1000], stringX[1000];
-	printf("flag1\n");
 	for (int i = 0; i < 999; i++)
 	{
 		stringA[i] = 'a';
@@ -56,38 +54,25 @@ int main()
 		stringD[i] = 'd';
 		stringX[i] = 'x';
 	}
-	printf("flag2\n");
 
 	stringA[999] = stringB[999] = stringC[999] = stringD[999] = stringX[999] = '\0';
 
-	printf("flag3\n");
 
 	char *strA = alloc(1000);
 	char *strB = alloc(1000);
 	char *strC = alloc(1000);
 	char *strD = alloc(1000);
 
-	printf("flag4\n");
 
 	for (int i = 0; i < 999; i++)
 	{
 		strA[i] = 'a';
-		printf("flag4a\n");
-
 		strB[i] = 'b';
-		printf("flag4b\n");
-
 		strC[i] = 'c';
-		printf("flag4c\n");
-
 		strD[i] = 'd';
-		printf("flag4d\n");
 	}
-	printf("flag5\n");
 
 	strA[999] = strB[999] = strC[999] = strD[999] = '\0';
-
-	printf("flag6\n");
 
 	if (strcmp(stringA, strA) == 0 && strcmp(stringB, strB) == 0 && strcmp(stringC, strC) == 0 && strcmp(stringD, strD) == 0)
 		printf("Test 1 passed: allocated 4 chunks of 1KB each\n");
