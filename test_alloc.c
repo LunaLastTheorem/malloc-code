@@ -57,12 +57,10 @@ int main()
 
 	stringA[999] = stringB[999] = stringC[999] = stringD[999] = stringX[999] = '\0';
 
-
 	char *strA = alloc(1000);
 	char *strB = alloc(1000);
 	char *strC = alloc(1000);
 	char *strD = alloc(1000);
-
 
 	for (int i = 0; i < 999; i++)
 	{
