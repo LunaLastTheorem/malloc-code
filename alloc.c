@@ -116,8 +116,9 @@ void dealloc(char *cPtr)
     {
         prev->next = curr_block;
     }
-    
-    else{
+
+    else
+    {
         head = curr_block;
     }
 }
