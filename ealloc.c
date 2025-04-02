@@ -54,7 +54,16 @@ char *alloc(int size)
                     allocated->next = ptr->next;
 
                     ptr->size = size;
-                    ptr->next = allocated;
+                    ptr->next = NULL;
+
+                    if (prev)
+                    {
+                        prev->next = allocated;
+                    }
+                    else
+                    {
+                        pages[i] = allocated;
+                    }
                 }
                 else
                 {
@@ -81,6 +90,48 @@ void dealloc(char *cPtr)
     if (cPtr == NULL)
     {
         return;
+    }
+
+    for (int i = 0; i < NUM_PAGES; i++)
+    {
+        node_t *curr_block = (node_t *)(cPtr - sizeof(node_t));
+        node_t *ptr = pages[i];
+        node_t *prev = NULL;
+
+        while (ptr != NULL && ptr < curr_block)
+        {
+            prev = ptr;
+            ptr = ptr->next;
+        }
+
+        curr_block->next = ptr;
+
+        if (ptr != NULL && (char *)curr_block + sizeof(node_t) + curr_block->size == (char *)ptr)
+        {
+            curr_block->size += sizeof(node_t) + ptr->size;
+            curr_block->next = ptr->next;
+        }
+
+        else
+        {
+            curr_block->next = ptr;
+        }
+
+        if (prev != NULL && (char *)prev + sizeof(node_t) + prev->size == (char *)curr_block)
+        {
+            prev->size += sizeof(node_t) + curr_block->size;
+            prev->next = curr_block->next;
+        }
+
+        else if (prev != NULL)
+        {
+            prev->next = curr_block;
+        }
+
+        else
+        {
+            pages[i] = curr_block;
+        }
     }
 }
 

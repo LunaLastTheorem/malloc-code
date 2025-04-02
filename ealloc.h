@@ -4,10 +4,10 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-//granularity of memory to mmap from OS
-#define PAGESIZE 4096
+// granularity of memory to mmap from OS
+#define PAGESIZE 4500
 
-//minimum allocation size
+// minimum allocation size
 #define MINALLOC 256
 
 // function declarations to support
