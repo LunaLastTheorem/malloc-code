@@ -9,12 +9,14 @@ typedef struct node_t
 } node_t;
 
 node_t *pages[NUM_PAGES];
+void *page_starts[NUM_PAGES];
 
 void init_alloc()
 {
-    for (int i = 0; i < NUM_PAGES; i++)
+    for (int i = 0; i < 4; i++)
     {
         pages[i] = NULL;
+        page_starts[i] = NULL;
     }
 }
 
@@ -29,12 +31,14 @@ char *alloc(int size)
     {
         if (pages[i] == NULL)
         {
-            pages[i] = (node_t *)mmap(NULL, PAGESIZE, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
-            if (pages[i] == MAP_FAILED)
+            void *ptr = (node_t *)mmap(NULL, PAGESIZE, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
+            if (ptr == MAP_FAILED)
             {
                 return NULL;
             }
 
+            page_starts[i] = ptr;
+            pages[i] = (node_t *)ptr;
             pages[i]->size = PAGESIZE - sizeof(node_t);
             pages[i]->next = NULL;
         }
@@ -53,9 +57,6 @@ char *alloc(int size)
                     allocated->size = remainder;
                     allocated->next = ptr->next;
 
-                    ptr->size = size;
-                    ptr->next = NULL;
-
                     if (prev)
                     {
                         prev->next = allocated;
@@ -64,6 +65,8 @@ char *alloc(int size)
                     {
                         pages[i] = allocated;
                     }
+
+                    ptr->size = size;
                 }
                 else
                 {
@@ -94,48 +97,51 @@ void dealloc(char *cPtr)
 
     for (int i = 0; i < NUM_PAGES; i++)
     {
-        node_t *curr_block = (node_t *)(cPtr - sizeof(node_t));
-        node_t *ptr = pages[i];
-        node_t *prev = NULL;
-
-        while (ptr != NULL && ptr < curr_block)
+        if (page_starts[i] == NULL)
         {
-            prev = ptr;
-            ptr = ptr->next;
+            continue;
         }
+        char *page_start = page_starts[i];
+        char *page_end = page_start + PAGESIZE;
 
-        curr_block->next = ptr;
-
-        if (ptr != NULL && (char *)curr_block + sizeof(node_t) + curr_block->size == (char *)ptr)
+        if (cPtr >= page_start && cPtr < page_end)
         {
-            curr_block->size += sizeof(node_t) + ptr->size;
-            curr_block->next = ptr->next;
-        }
+            node_t *curr_block = (node_t *)(cPtr - sizeof(node_t));
+            node_t *ptr = pages[i];
+            node_t *prev = NULL;
 
-        else
-        {
-            curr_block->next = ptr;
-        }
+            while (ptr != NULL && ptr < curr_block)
+            {
+                prev = ptr;
+                ptr = ptr->next;
+            }
+            if (ptr != NULL && (char *)curr_block + sizeof(node_t) + curr_block->size == (char *)ptr)
+            {
+                curr_block->size += sizeof(node_t) + ptr->size;
+                curr_block->next = ptr->next;
+            }
+            else
+            {
+                curr_block->next = ptr;
+            }
 
-        if (prev != NULL && (char *)prev + sizeof(node_t) + prev->size == (char *)curr_block)
-        {
-            prev->size += sizeof(node_t) + curr_block->size;
-            prev->next = curr_block->next;
-        }
+            if (prev != NULL && (char *)prev + sizeof(node_t) + prev->size == (char *)curr_block) {
+                prev->size += sizeof(node_t) + curr_block->size;
+                prev->next = curr_block->next;
+            } else {
+                if (prev != NULL) {
+                    prev->next = curr_block;
+                } else {
+                    pages[i] = curr_block;
+                }
+            }
 
-        else if (prev != NULL)
-        {
-            prev->next = curr_block;
-        }
-
-        else
-        {
-            pages[i] = curr_block;
+            return;
         }
     }
 }
 
 void cleanup()
 {
-    printf("%s", "hello world");
+    printf("%s", "not necessary for this according to directions\n");
 }
